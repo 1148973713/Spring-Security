@@ -15,6 +15,7 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.approval.ApprovalStore;
 import org.springframework.security.oauth2.provider.approval.InMemoryApprovalStore;
+import org.springframework.security.oauth2.provider.approval.JdbcApprovalStore;
 import org.springframework.security.oauth2.provider.client.JdbcClientDetailsService;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.InMemoryAuthorizationCodeServices;
@@ -27,8 +28,8 @@ import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 
 import javax.sql.DataSource;
 
-/*@Configuration
-@EnableAuthorizationServer*/
+@Configuration
+@EnableAuthorizationServer
 public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
 
     @Autowired
@@ -40,8 +41,8 @@ public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurer
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    @Autowired
-    private ClientDetailsService clientDetailsService;
+/*    @Autowired
+    private ClientDetailsService clientDetailsService;*/
 
     @Autowired
     private AuthorizationCodeServices authorizationCodeServices;
@@ -68,14 +69,15 @@ public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurer
     //1、客户端详细信息服务配置器
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        //clients.withClientDetails(clientDetailsService);            //使用in‐memory存储
-        clients.inMemory().withClient("c1")
+        clients.withClientDetails(clientDetailsService(dataSource));
+        //使用in‐memory存储
+/*        clients.inMemory().withClient("c1")
                 .secret(new BCryptPasswordEncoder().encode("123456"))//$2a$10$0uhIO.ADUFv7OQ/kuwsC1.o3JYvnevt5y3qX/ji0AUXs4KYGio3q6
                 .resourceIds("r1")
                 .authorizedGrantTypes("authorization_code", "password", "client_credentials", "implicit", "refresh_token")//该client允许的授权类型
                 .scopes("all")			//授权范围
                 .autoApprove(false)
-                .redirectUris("https://www.baidu.com");
+                .redirectUris("https://www.baidu.com");*/
     }
 
     //------------------------------------------------------------------------------------------------------------------
@@ -90,7 +92,7 @@ public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurer
     public AuthorizationServerTokenServices tokenServices() {
         DefaultTokenServices tokenServices = new DefaultTokenServices();
         tokenServices.setTokenStore(tokenStore());
-        tokenServices.setClientDetailsService(clientDetailsService);
+        tokenServices.setClientDetailsService(clientDetailsService(dataSource));
         // token 有效期自定义设置，默认 12 小时
         tokenServices.setAccessTokenValiditySeconds(60 * 60 * 12);
         // refresh token 有效期自定义设置，默认 30 天
@@ -108,8 +110,8 @@ public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurer
     // 授权信息保存策略
     @Bean
     public ApprovalStore approvalStore() {
-        return new InMemoryApprovalStore();
-        //return new JdbcApprovalStore(dataSource);
+        //return new InMemoryApprovalStore();
+        return new JdbcApprovalStore(dataSource);
     }
 
     //2、授权服务器端点配置器
