@@ -1,6 +1,7 @@
 package com.example.authorization.server.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -14,23 +15,21 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
 import org.springframework.security.oauth2.provider.ClientDetailsService;
 import org.springframework.security.oauth2.provider.approval.ApprovalStore;
-import org.springframework.security.oauth2.provider.approval.InMemoryApprovalStore;
 import org.springframework.security.oauth2.provider.approval.JdbcApprovalStore;
 import org.springframework.security.oauth2.provider.client.JdbcClientDetailsService;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
-import org.springframework.security.oauth2.provider.code.InMemoryAuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.JdbcAuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
 import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
 import org.springframework.security.oauth2.provider.token.TokenStore;
-import org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore;
 import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 
 import javax.sql.DataSource;
 
-/*@Configuration
-@EnableAuthorizationServer*/
-public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
+@Configuration
+@EnableAuthorizationServer
+public class JwtAuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
 
     @Autowired
     private DataSource dataSource;
@@ -43,6 +42,13 @@ public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurer
 
 /*    @Autowired
     private ClientDetailsService clientDetailsService;*/
+
+    @Autowired
+    @Qualifier("jwtTokenStore")
+    private TokenStore tokenStore;
+
+    @Autowired
+    private JwtAccessTokenConverter jwtAccessTokenConverter;
 
     @Autowired
     private AuthorizationCodeServices authorizationCodeServices;
@@ -81,24 +87,20 @@ public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurer
     }
 
     //------------------------------------------------------------------------------------------------------------------
-    //写入数据库生成令牌
-    @Bean
-    public TokenStore tokenStore() {
-        return new JdbcTokenStore(dataSource);
-    }
 
     //授权服务器令牌服务
-    @Bean
+/*    @Bean
     public AuthorizationServerTokenServices tokenServices() {
         DefaultTokenServices tokenServices = new DefaultTokenServices();
-        tokenServices.setTokenStore(tokenStore());
-        tokenServices.setClientDetailsService(clientDetailsService(dataSource));
+        //
+        tokenServices.setTokenStore(tokenStore);
+        //tokenServices.setClientDetailsService(clientDetailsService(dataSource));
         // token 有效期自定义设置，默认 12 小时
         tokenServices.setAccessTokenValiditySeconds(60 * 60 * 12);
         // refresh token 有效期自定义设置，默认 30 天
         tokenServices.setRefreshTokenValiditySeconds(60 * 60 * 24 * 7);
         return tokenServices;
-    }
+    }*/
 
     //授权码模式数据来源
     @Bean
@@ -118,7 +120,9 @@ public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurer
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         endpoints.authenticationManager(authenticationManager)
-                .tokenServices(tokenServices())
+                //.tokenServices(tokenServices())
+                .tokenStore(tokenStore)
+                .accessTokenConverter(jwtAccessTokenConverter)
                 //这个属性是用来设置授权码服务的，主要用于 authorization_code 授权码类型模式。
                 .authorizationCodeServices(authorizationCodeServices())
                 //批准商店-用于保存、检索和撤销用户批准

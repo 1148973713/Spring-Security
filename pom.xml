@@ -18,5 +18,6 @@
     <modules>
         <module>Authorization-Server</module>
         <module>Security-Resource</module>
+        <module>Jwt-Service</module>
     </modules>
 </project>
