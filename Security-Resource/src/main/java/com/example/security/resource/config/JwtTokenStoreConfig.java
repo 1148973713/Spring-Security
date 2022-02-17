@@ -1,4 +1,4 @@
-package com.example.authorization.server.config;
+package com.example.security.resource.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -10,7 +10,7 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 public class JwtTokenStoreConfig {
 
     @Bean
-    public TokenStore jwtTokenStore(){
+    public TokenStore JwtTokenStore(){
         return new JwtTokenStore(jwtAccessTokenConverter());
     }
 
@@ -24,8 +24,4 @@ public class JwtTokenStoreConfig {
         return jwtAccessTokenConverter;
     }
 
-    @Bean
-    public JwtTokenEnhancer jwtTokenEnhancer(){
-        return new JwtTokenEnhancer();
-    }
 }

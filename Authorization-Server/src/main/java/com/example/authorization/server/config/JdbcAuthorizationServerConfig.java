@@ -41,8 +41,8 @@ public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurer
     @Autowired
     private AuthenticationManager authenticationManager;
 
-/*    @Autowired
-    private ClientDetailsService clientDetailsService;*/
+    @Autowired
+    private ClientDetailsService clientDetailsService;
 
     @Autowired
     private AuthorizationCodeServices authorizationCodeServices;
@@ -69,7 +69,7 @@ public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurer
     //1、客户端详细信息服务配置器
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        clients.withClientDetails(clientDetailsService(dataSource));
+        clients.withClientDetails(clientDetailsService);
         //使用in‐memory存储
 /*        clients.inMemory().withClient("c1")
                 .secret(new BCryptPasswordEncoder().encode("123456"))//$2a$10$0uhIO.ADUFv7OQ/kuwsC1.o3JYvnevt5y3qX/ji0AUXs4KYGio3q6
@@ -92,7 +92,7 @@ public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurer
     public AuthorizationServerTokenServices tokenServices() {
         DefaultTokenServices tokenServices = new DefaultTokenServices();
         tokenServices.setTokenStore(tokenStore());
-        tokenServices.setClientDetailsService(clientDetailsService(dataSource));
+        tokenServices.setClientDetailsService(clientDetailsService);
         // token 有效期自定义设置，默认 12 小时
         tokenServices.setAccessTokenValiditySeconds(60 * 60 * 12);
         // refresh token 有效期自定义设置，默认 30 天
@@ -102,7 +102,7 @@ public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurer
 
     //授权码模式数据来源
     @Bean
-    public AuthorizationCodeServices authorizationCodeServices() {
+    public AuthorizationCodeServices authorizationCodeServices(DataSource dataSource) {
         //return new InMemoryAuthorizationCodeServices();
         return new JdbcAuthorizationCodeServices(dataSource);
     }
@@ -120,7 +120,7 @@ public class JdbcAuthorizationServerConfig extends AuthorizationServerConfigurer
         endpoints.authenticationManager(authenticationManager)
                 .tokenServices(tokenServices())
                 //这个属性是用来设置授权码服务的，主要用于 authorization_code 授权码类型模式。
-                .authorizationCodeServices(authorizationCodeServices())
+                .authorizationCodeServices(authorizationCodeServices)
                 //批准商店-用于保存、检索和撤销用户批准
                 .approvalStore(approvalStore())
                 //获取允许的令牌端点请求方法

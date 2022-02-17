@@ -18,9 +18,9 @@ import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 
-@Configuration
+/*@Configuration
 @EnableResourceServer
-@EnableGlobalMethodSecurity(prePostEnabled = true) // Spring Security 方法权限
+@EnableGlobalMethodSecurity(prePostEnabled = true)*/ // Spring Security 方法权限
 public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
 
     @Autowired

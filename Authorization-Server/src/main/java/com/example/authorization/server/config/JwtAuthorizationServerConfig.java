@@ -19,13 +19,13 @@ import org.springframework.security.oauth2.provider.approval.JdbcApprovalStore;
 import org.springframework.security.oauth2.provider.client.JdbcClientDetailsService;
 import org.springframework.security.oauth2.provider.code.AuthorizationCodeServices;
 import org.springframework.security.oauth2.provider.code.JdbcAuthorizationCodeServices;
-import org.springframework.security.oauth2.provider.token.AuthorizationServerTokenServices;
-import org.springframework.security.oauth2.provider.token.DefaultTokenServices;
-import org.springframework.security.oauth2.provider.token.TokenStore;
+import org.springframework.security.oauth2.provider.token.*;
 import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 
 import javax.sql.DataSource;
+import java.util.ArrayList;
+import java.util.List;
 
 @Configuration
 @EnableAuthorizationServer
@@ -40,15 +40,19 @@ public class JwtAuthorizationServerConfig extends AuthorizationServerConfigurerA
     @Autowired
     private AuthenticationManager authenticationManager;
 
-/*    @Autowired
-    private ClientDetailsService clientDetailsService;*/
-
-    @Autowired
     @Qualifier("jwtTokenStore")
+    @Autowired
     private TokenStore tokenStore;
 
+    //在JWT编码的令牌值和OAuth认证信息之间进行转换的助手(在两个方向上)。当授予令牌时，还充当令牌增强器。
     @Autowired
     private JwtAccessTokenConverter jwtAccessTokenConverter;
+
+    @Autowired
+    private JwtTokenEnhancer jwtTokenEnhancer;
+
+    @Autowired
+    private ClientDetailsService clientDetailsService;
 
     @Autowired
     private AuthorizationCodeServices authorizationCodeServices;
@@ -67,66 +71,57 @@ public class JwtAuthorizationServerConfig extends AuthorizationServerConfigurerA
         return clientDetailsService;
     }
 
-/*    @Bean
-    public ClientDetailsService jdbcClientDetailsService() {
-        return new JdbcClientDetailsService(dataSource);
-    }*/
 
     //1、客户端详细信息服务配置器
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        clients.withClientDetails(clientDetailsService(dataSource));
-        //使用in‐memory存储
-/*        clients.inMemory().withClient("c1")
-                .secret(new BCryptPasswordEncoder().encode("123456"))//$2a$10$0uhIO.ADUFv7OQ/kuwsC1.o3JYvnevt5y3qX/ji0AUXs4KYGio3q6
-                .resourceIds("r1")
-                .authorizedGrantTypes("authorization_code", "password", "client_credentials", "implicit", "refresh_token")//该client允许的授权类型
-                .scopes("all")			//授权范围
-                .autoApprove(false)
-                .redirectUris("https://www.baidu.com");*/
+        clients.withClientDetails(clientDetailsService);
     }
 
     //------------------------------------------------------------------------------------------------------------------
 
+    @Bean
+    public TokenStore tokenStore() {
+        return new JdbcTokenStore(dataSource);
+    }
+
     //授权服务器令牌服务
-/*    @Bean
+    @Bean
     public AuthorizationServerTokenServices tokenServices() {
         DefaultTokenServices tokenServices = new DefaultTokenServices();
-        //
-        tokenServices.setTokenStore(tokenStore);
-        //tokenServices.setClientDetailsService(clientDetailsService(dataSource));
+        tokenServices.setTokenStore(tokenStore());
+        tokenServices.setClientDetailsService(clientDetailsService);
         // token 有效期自定义设置，默认 12 小时
         tokenServices.setAccessTokenValiditySeconds(60 * 60 * 12);
         // refresh token 有效期自定义设置，默认 30 天
         tokenServices.setRefreshTokenValiditySeconds(60 * 60 * 24 * 7);
         return tokenServices;
-    }*/
-
-    //授权码模式数据来源
-    @Bean
-    public AuthorizationCodeServices authorizationCodeServices() {
-        //return new InMemoryAuthorizationCodeServices();
-        return new JdbcAuthorizationCodeServices(dataSource);
     }
 
-    // 授权信息保存策略
     @Bean
-    public ApprovalStore approvalStore() {
-        //return new InMemoryApprovalStore();
-        return new JdbcApprovalStore(dataSource);
+    public AuthorizationCodeServices authorizationCodeServices(DataSource dataSource){
+        return new JdbcAuthorizationCodeServices(dataSource);
     }
 
     //2、授权服务器端点配置器
     @Override
     public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+        //设置jwt增强内容
+        TokenEnhancerChain chain = new TokenEnhancerChain();
+        List<TokenEnhancer> tokenEnhancers = new ArrayList<>();
+        //JWT自定义声明，默认是Outh2生成的，所以要再加入jwtAccessTokenConverter
+        tokenEnhancers.add(jwtTokenEnhancer);
+        tokenEnhancers.add(jwtAccessTokenConverter);
+        chain.setTokenEnhancers(tokenEnhancers);
+
         endpoints.authenticationManager(authenticationManager)
-                //.tokenServices(tokenServices())
+                //使用JWT方式生成token
                 .tokenStore(tokenStore)
+                //访问令牌转换器
                 .accessTokenConverter(jwtAccessTokenConverter)
+                //.tokenEnhancer(chain)
                 //这个属性是用来设置授权码服务的，主要用于 authorization_code 授权码类型模式。
-                .authorizationCodeServices(authorizationCodeServices())
-                //批准商店-用于保存、检索和撤销用户批准
-                .approvalStore(approvalStore())
+                //.authorizationCodeServices(authorizationCodeServices)
                 //获取允许的令牌端点请求方法
                 .allowedTokenEndpointRequestMethods(HttpMethod.POST);
     }
