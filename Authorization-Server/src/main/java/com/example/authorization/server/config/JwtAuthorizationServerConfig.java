@@ -54,16 +54,13 @@ public class JwtAuthorizationServerConfig extends AuthorizationServerConfigurerA
     @Autowired
     private ClientDetailsService clientDetailsService;
 
-    @Autowired
-    private AuthorizationCodeServices authorizationCodeServices;
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-
+   //提供关于OAuth2客户端的详细信息的服务,这里意识是采用数据库存储客户端信息
     @Bean
     public ClientDetailsService clientDetailsService(DataSource dataSource) {
         JdbcClientDetailsService clientDetailsService = new JdbcClientDetailsService(dataSource);
@@ -72,7 +69,7 @@ public class JwtAuthorizationServerConfig extends AuthorizationServerConfigurerA
     }
 
 
-    //1、客户端详细信息服务配置器
+    //客户端详细信息服务配置器
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
         clients.withClientDetails(clientDetailsService);

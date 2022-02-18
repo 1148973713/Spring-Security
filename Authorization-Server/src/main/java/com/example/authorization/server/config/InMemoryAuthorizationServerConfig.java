@@ -83,7 +83,6 @@ public class InMemoryAuthorizationServerConfig extends AuthorizationServerConfig
     @Bean
     public AuthorizationCodeServices authorizationCodeServices() {
         return new InMemoryAuthorizationCodeServices();
-        //return new JdbcAuthorizationCodeServices(dataSource);
     }
 
     // 授权信息保存策略

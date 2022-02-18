@@ -10,18 +10,15 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 public class JwtTokenStoreConfig {
 
     @Bean
-    public TokenStore JwtTokenStore(){
+    public TokenStore tokenStore(){
         return new JwtTokenStore(jwtAccessTokenConverter());
     }
 
 
-    //把本来生成的token生成JwtToken
     @Bean
     public JwtAccessTokenConverter jwtAccessTokenConverter(){
         JwtAccessTokenConverter jwtAccessTokenConverter = new JwtAccessTokenConverter();
-        //加入盐值密钥
         jwtAccessTokenConverter.setSigningKey("test_key");
         return jwtAccessTokenConverter;
     }
-
 }

@@ -1,7 +1,6 @@
 package com.example.security.resource.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -25,13 +24,12 @@ public class JwtResourceServerConfig extends ResourceServerConfigurerAdapter {
     @Autowired
     private DataSource dataSource;
 
-    @Qualifier("JwtTokenStore")
     @Autowired
     private TokenStore tokenStore;
 
     @Override
     public void configure(ResourceServerSecurityConfigurer resources) throws Exception {
-        resources.resourceId("r1").tokenStore(tokenStore).stateless(true);
+        resources.resourceId("r1").tokenStore(tokenStore);
     }
     @Bean
     public ResourceServerTokenServices resourceServerTokenServices(){
