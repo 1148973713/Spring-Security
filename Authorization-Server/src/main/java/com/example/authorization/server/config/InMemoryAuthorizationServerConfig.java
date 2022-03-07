@@ -49,14 +49,15 @@ public class InMemoryAuthorizationServerConfig extends AuthorizationServerConfig
     //1、客户端详细信息服务配置器
     @Override
     public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
-        //clients.withClientDetails(clientDetailsService);            //使用in‐memory存储
+        //clients.withClientDetails(clientDetailsService);
+        // 使用in‐memory存储
         clients.inMemory().withClient("c1")
                 .secret(new BCryptPasswordEncoder().encode("123456"))//$2a$10$0uhIO.ADUFv7OQ/kuwsC1.o3JYvnevt5y3qX/ji0AUXs4KYGio3q6
                 .resourceIds("r1")
                 .authorizedGrantTypes("authorization_code", "password", "client_credentials", "implicit", "refresh_token")//该client允许的授权类型
-                .scopes("all")			//授权范围
-                .autoApprove(false)
-                .redirectUris("https://www.baidu.com");
+                .scopes("all")//授权范围
+                .autoApprove(false) //是否自动授权
+                .redirectUris("https://www.baidu.com"); //单点登录时配置
     }
 
     //------------------------------------------------------------------------------------------------------------------

@@ -40,7 +40,7 @@ public class JwtAuthorizationServerConfig extends AuthorizationServerConfigurerA
     @Autowired
     private AuthenticationManager authenticationManager;
 
-    @Qualifier("jwtTokenStore")
+    @Qualifier("myJwtTokenStore")
     @Autowired
     private TokenStore tokenStore;
 
@@ -77,16 +77,16 @@ public class JwtAuthorizationServerConfig extends AuthorizationServerConfigurerA
 
     //------------------------------------------------------------------------------------------------------------------
 
-    @Bean
+/*    @Bean
     public TokenStore tokenStore() {
         return new JdbcTokenStore(dataSource);
-    }
+    }*/
 
     //授权服务器令牌服务
     @Bean
     public AuthorizationServerTokenServices tokenServices() {
         DefaultTokenServices tokenServices = new DefaultTokenServices();
-        tokenServices.setTokenStore(tokenStore());
+        tokenServices.setTokenStore(tokenStore);
         tokenServices.setClientDetailsService(clientDetailsService);
         // token 有效期自定义设置，默认 12 小时
         tokenServices.setAccessTokenValiditySeconds(60 * 60 * 12);
@@ -116,9 +116,12 @@ public class JwtAuthorizationServerConfig extends AuthorizationServerConfigurerA
                 .tokenStore(tokenStore)
                 //访问令牌转换器
                 .accessTokenConverter(jwtAccessTokenConverter)
-                //.tokenEnhancer(chain)
+                //设置jwt拓展信息
+                .tokenEnhancer(chain)
+               // .tokenServices(tokenServices())
                 //这个属性是用来设置授权码服务的，主要用于 authorization_code 授权码类型模式。
                 //.authorizationCodeServices(authorizationCodeServices)
+
                 //获取允许的令牌端点请求方法
                 .allowedTokenEndpointRequestMethods(HttpMethod.POST);
     }
@@ -127,7 +130,8 @@ public class JwtAuthorizationServerConfig extends AuthorizationServerConfigurerA
     //3、授权服务器安全配置器
     @Override
     public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
-        security.tokenKeyAccess("permitAll()")
+        //security.tokenKeyAccess("permitAll()")
+        security.tokenKeyAccess("isAuthenticated()")
                 .checkTokenAccess("permitAll()")
                 .allowFormAuthenticationForClients();
     }
